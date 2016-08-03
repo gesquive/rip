@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"path"
 
+	log "github.com/gesquive/cli-log"
+	"github.com/gesquive/rip/format"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var cfgFile string
@@ -25,7 +27,7 @@ var RootCmd = &cobra.Command{
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	if err := RootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		log.Error(err)
 		os.Exit(-1)
 	}
 }
@@ -41,24 +43,37 @@ func initConfig() {
 }
 
 func run(cmd *cobra.Command, args []string) {
-	if len(args) != 3 {
+	if len(args) < 3 {
 		cmd.Usage()
 		os.Exit(1)
 	}
 
 	address := args[0]
 	protocol := args[1]
-	file := args[2]
+	files := args[2:]
 
-	sendTextFile(file, protocol, address)
+	for _, f := range files {
+		err := sendTextFile(f, protocol, address)
+		if err != nil {
+			log.Errorf("Failed to send '%s' to %s://%s\n", f, protocol, address)
+			log.Error(err.Error())
+		}
+	}
 }
 
-func sendTextFile(path string, network string, address string) (err error) {
-	textFile, err := os.Open(path)
+func sendTextFile(filePath string, network string, address string) (err error) {
+	textFile, err := os.Open(filePath)
 	defer textFile.Close()
 	if err != nil {
 		return err
 	}
+	fileInfo, err := textFile.Stat()
+	if err != nil {
+		return err
+	}
+	bytesRead := uint64(0)
+	totalSize := uint64(fileInfo.Size())
+	fileName := fmt.Sprintf("%15s", path.Base(filePath))
 
 	scanner := bufio.NewScanner(textFile)
 	scanner.Split(bufio.ScanLines)
@@ -70,9 +85,11 @@ func sendTextFile(path string, network string, address string) (err error) {
 
 	for scanner.Scan() {
 		line := scanner.Text()
-		// fmt.Println(line)
-		// TODO: Add progress bar!
+		bytesRead += uint64(len(line)) + 1
 		fmt.Fprintf(destPort, line)
+		log.Infof("\r%s : %s %s", fileName,
+			format.Percent(bytesRead, totalSize), format.Progress(bytesRead, totalSize))
 	}
+	log.Infof("\r%s : %s\n", fileName, log.Green("%16s", "complete"))
 	return err
 }
