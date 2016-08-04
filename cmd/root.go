@@ -20,11 +20,11 @@ var showVersion bool
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Use:   "rip <host>[:<port>] <tcp|udp> <file_path>",
-	Short: "Sends a text file line by line to a remote host/port",
-	Long: `Sends a text file line by line to a remote host/port.
-	The data sent will not include line endings.`,
-	Run: run,
+	Use:       "rip [flags] <host>[:<port>] <tcp|udp> <file_path> [<file_path>...]",
+	Short:     "Sends a text file line by line to a remote host/port",
+	Long:      `Sends a text file line by line to a remote host/port.`,
+	ValidArgs: []string{"host:port", "tcp|udp", "file_path"},
+	Run:       run,
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.
@@ -60,6 +60,7 @@ func initConfig() {
 }
 
 func run(cmd *cobra.Command, args []string) {
+	//TODO: Add ability to receive piped input
 	if len(args) < 3 {
 		cmd.Usage()
 		os.Exit(1)

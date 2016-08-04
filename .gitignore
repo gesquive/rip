@@ -1,4 +1,9 @@
-vendor/
+/bin/*
+vendor/*
+pkg/
+dist/
+
+*.bak
 
 rip
 server/server
