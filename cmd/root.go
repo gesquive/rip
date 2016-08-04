@@ -7,12 +7,16 @@ import (
 	"os"
 	"path"
 
-	log "github.com/gesquive/cli-log"
+	cli "github.com/gesquive/cli-log"
 	"github.com/gesquive/rip/format"
 	"github.com/spf13/cobra"
 )
 
 var cfgFile string
+var displayVersion string
+
+var logDebug bool
+var showVersion bool
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -25,9 +29,10 @@ var RootCmd = &cobra.Command{
 
 // Execute adds all child commands to the root command sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
+func Execute(version string) {
+	displayVersion = version
 	if err := RootCmd.Execute(); err != nil {
-		log.Error(err)
+		fmt.Println(err)
 		os.Exit(-1)
 	}
 }
@@ -35,11 +40,23 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	//TODO: add version flag
-	//TODO: add debug logging
+	RootCmd.PersistentFlags().BoolVarP(&logDebug, "debug", "D", false,
+		"Write debug messages to console")
+	RootCmd.PersistentFlags().BoolVarP(&showVersion, "version", "V", false,
+		"Show the version and exit")
+
+	RootCmd.PersistentFlags().MarkHidden("debug")
 }
 
 func initConfig() {
+	if logDebug {
+		cli.SetLogLevel(cli.LevelDebug)
+	}
+	if showVersion {
+		cli.Info(displayVersion)
+		os.Exit(0)
+	}
+	cli.Debug("Running with debug turned on")
 }
 
 func run(cmd *cobra.Command, args []string) {
@@ -55,8 +72,8 @@ func run(cmd *cobra.Command, args []string) {
 	for _, f := range files {
 		err := sendTextFile(f, protocol, address)
 		if err != nil {
-			log.Errorf("Failed to send '%s' to %s://%s\n", f, protocol, address)
-			log.Error(err.Error())
+			cli.Errorf("Failed to send '%s' to %s://%s\n", f, protocol, address)
+			cli.Error(err.Error())
 		}
 	}
 }
@@ -87,9 +104,9 @@ func sendTextFile(filePath string, network string, address string) (err error) {
 		line := scanner.Text()
 		bytesRead += uint64(len(line)) + 1
 		fmt.Fprintf(destPort, line)
-		log.Infof("\r%s : %s %s", fileName,
+		cli.Infof("\r%s : %s %s", fileName,
 			format.Percent(bytesRead, totalSize), format.Progress(bytesRead, totalSize))
 	}
-	log.Infof("\r%s : %s\n", fileName, log.Green("%16s", "complete"))
+	cli.Infof("\r%s : %s\n", fileName, cli.Green("%16s", "complete"))
 	return err
 }
