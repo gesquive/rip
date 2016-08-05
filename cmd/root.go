@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"path"
+	"time"
 
 	cli "github.com/gesquive/cli-log"
 	"github.com/gesquive/rip/format"
@@ -68,6 +69,7 @@ func run(cmd *cobra.Command, args []string) {
 	address := args[0]
 	protocol := args[1]
 	files := args[2:]
+	cli.Info("Sending data to %s://%s", protocol, address)
 
 	// Detect if user is piping in text
 	fileInput, err := os.Stdin.Stat()
@@ -81,7 +83,7 @@ func run(cmd *cobra.Command, args []string) {
 		cli.Debug("Pipe input detected, sending")
 		err := sendTextFile(os.Stdin, protocol, address)
 		if err != nil {
-			cli.Errorf("Failed to send piped data to %s://%s\n", protocol, address)
+			cli.Error("Failed to send piped data")
 			cli.Error(err.Error())
 		}
 	}
@@ -91,7 +93,7 @@ func run(cmd *cobra.Command, args []string) {
 		textFile, err := os.Open(f)
 		defer textFile.Close()
 		if err != nil {
-			cli.Errorf("Failed to send '%s' to %s://%s\n", f, protocol, address)
+			cli.Errorf("Failed to send '%s'\n", f)
 			cli.Error(err.Error())
 			errCount++
 			continue
@@ -109,9 +111,9 @@ func run(cmd *cobra.Command, args []string) {
 		cmd.Usage()
 		os.Exit(1)
 	} else if errCount == 0 {
-		cli.Info("\nAll files successfully sent.")
+		cli.Info("All files successfully sent.")
 	} else {
-		cli.Warn("\nThere were some errors while sending files.")
+		cli.Warn("There were some errors while sending files.")
 	}
 }
 
@@ -122,7 +124,7 @@ func sendTextFile(textFile *os.File, network string, address string) (err error)
 	}
 	bytesRead := uint64(0)
 	totalSize := uint64(fileInfo.Size())
-	fileName := fmt.Sprintf("%15s", path.Base(textFile.Name()))
+	fileName := path.Base(textFile.Name())
 
 	scanner := bufio.NewScanner(textFile)
 	scanner.Split(bufio.ScanLines)
@@ -136,12 +138,9 @@ func sendTextFile(textFile *os.File, network string, address string) (err error)
 		line := scanner.Text()
 		bytesRead += uint64(len(line)) + 1
 		fmt.Fprintf(destPort, line)
-		cli.Infof("\r%s : %s %s", fileName,
-			format.Percent(bytesRead, totalSize), format.Progress(bytesRead, totalSize))
-		//   default: Progress: 85% (Rate: 12.8M/s, Estimated time remaining: 0:00:04)
-		// Then switches the entire line to green and states
-		// default: Successfully added box 'ubuntu/xenial64' (v20160725.0.0) for 'virtualbox'!
+		cli.Infof("\rtransfer: %s %s", fileName, format.Progress(bytesRead, totalSize))
+		time.Sleep(time.Millisecond * 2)
 	}
-	cli.Infof("\r%s : %s\n", fileName, cli.Green("%16s", "complete"))
+	cli.Info(cli.Green("\rtransfer: Successfully sent '%s'", fileName))
 	return err
 }
