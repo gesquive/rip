@@ -1,0 +1,10 @@
+hash: 0d56e43eb37c082e8485234c94f493c998ad64b7a1c6316c765083b213ba56ce
+updated: 2016-08-04T23:03:00.848145-05:00
+imports:
+- name: github.com/dustin/go-humanize
+  version: 2fcb5204cdc65b4bec9fd0a87606bb0d0e3c54e8
+- name: github.com/gesquive/cli-log
+  version: b853cc68da99cf759d305a3e9daabd4fdefa8a1d
+- name: github.com/spf13/cobra
+  version: 7c674d9e72017ed25f6d2b5e497a1368086b6a6f
+devImports: []
