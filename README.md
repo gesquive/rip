@@ -5,7 +5,7 @@ Sends a text file line by line to a remote host/port.
 
 ### Why?
  - Because bash has the ability to send data directly to a port, but other shell's and OSs do not.
- - Because netcat is sometimes blocked because iti is a "hacking" tool.
+ - Because netcat is sometimes blocked because it is a "hacking" tool.
 
 ## Installing
 
@@ -35,6 +35,14 @@ Optionally, a hidden debug flag is available in case you need additional output.
 ```console
 Hidden Flags:
   -D, --debug                  Include debug statements in log output
+```
+
+You can also pipe in input in addition to specified files on the command line:
+
+```console
+$ rip server:3333 tcp massive.log
+$ cat massive.log | rip server:3333 tcp
+$ app-with-output | rip server:3333 tcp
 ```
 
 ## Documentation

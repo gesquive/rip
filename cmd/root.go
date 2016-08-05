@@ -60,8 +60,7 @@ func initConfig() {
 }
 
 func run(cmd *cobra.Command, args []string) {
-	//TODO: Add ability to receive piped input
-	if len(args) < 3 {
+	if len(args) < 2 {
 		cmd.Usage()
 		os.Exit(1)
 	}
@@ -70,28 +69,60 @@ func run(cmd *cobra.Command, args []string) {
 	protocol := args[1]
 	files := args[2:]
 
-	for _, f := range files {
-		err := sendTextFile(f, protocol, address)
+	// Detect if user is piping in text
+	fileInput, err := os.Stdin.Stat()
+	if err != nil {
+		cli.Error(err.Error())
+		os.Exit(2)
+	}
+
+	pipeFound := fileInput.Mode()&os.ModeNamedPipe != 0
+	if pipeFound {
+		cli.Debug("Pipe input detected, sending")
+		err := sendTextFile(os.Stdin, protocol, address)
 		if err != nil {
-			cli.Errorf("Failed to send '%s' to %s://%s\n", f, protocol, address)
+			cli.Errorf("Failed to send piped data to %s://%s\n", protocol, address)
 			cli.Error(err.Error())
 		}
 	}
+
+	errCount := 0
+	for _, f := range files {
+		textFile, err := os.Open(f)
+		defer textFile.Close()
+		if err != nil {
+			cli.Errorf("Failed to send '%s' to %s://%s\n", f, protocol, address)
+			cli.Error(err.Error())
+			errCount++
+			continue
+		}
+		err = sendTextFile(textFile, protocol, address)
+		if err != nil {
+			cli.Errorf("Failed to send '%s' to %s://%s\n", f, protocol, address)
+			cli.Error(err.Error())
+			errCount++
+		}
+	}
+
+	if !pipeFound && len(files) == 0 {
+		cli.Warn("No data was piped into or specified on the command line.\n")
+		cmd.Usage()
+		os.Exit(1)
+	} else if errCount == 0 {
+		cli.Info("\nAll files successfully sent.")
+	} else {
+		cli.Warn("\nThere were some errors while sending files.")
+	}
 }
 
-func sendTextFile(filePath string, network string, address string) (err error) {
-	textFile, err := os.Open(filePath)
-	defer textFile.Close()
-	if err != nil {
-		return err
-	}
+func sendTextFile(textFile *os.File, network string, address string) (err error) {
 	fileInfo, err := textFile.Stat()
 	if err != nil {
 		return err
 	}
 	bytesRead := uint64(0)
 	totalSize := uint64(fileInfo.Size())
-	fileName := fmt.Sprintf("%15s", path.Base(filePath))
+	fileName := fmt.Sprintf("%15s", path.Base(textFile.Name()))
 
 	scanner := bufio.NewScanner(textFile)
 	scanner.Split(bufio.ScanLines)
@@ -107,6 +138,9 @@ func sendTextFile(filePath string, network string, address string) (err error) {
 		fmt.Fprintf(destPort, line)
 		cli.Infof("\r%s : %s %s", fileName,
 			format.Percent(bytesRead, totalSize), format.Progress(bytesRead, totalSize))
+		//   default: Progress: 85% (Rate: 12.8M/s, Estimated time remaining: 0:00:04)
+		// Then switches the entire line to green and states
+		// default: Successfully added box 'ubuntu/xenial64' (v20160725.0.0) for 'virtualbox'!
 	}
 	cli.Infof("\r%s : %s\n", fileName, cli.Green("%16s", "complete"))
 	return err
