@@ -8,7 +8,7 @@ import (
 	"path"
 	"time"
 
-	cli "github.com/gesquive/cli-log"
+	"github.com/gesquive/cli"
 	"github.com/gesquive/rip/format"
 	"github.com/spf13/cobra"
 )
@@ -53,7 +53,7 @@ func init() {
 
 func initConfig() {
 	if logDebug {
-		cli.SetLogLevel(cli.LevelDebug)
+		cli.SetPrintLevel(cli.LevelDebug)
 	}
 	if showVersion {
 		cli.Info(displayVersion)
