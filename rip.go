@@ -6,7 +6,6 @@ import (
 	"net"
 	"os"
 	"path"
-	"time"
 
 	"github.com/gesquive/cli"
 	"github.com/gesquive/rip/format"
@@ -125,6 +124,7 @@ func sendTextFile(textFile *os.File, network string, address string) (err error)
 		return err
 	}
 	bytesRead := uint64(0)
+	linesRead := uint64(0)
 	totalSize := uint64(fileInfo.Size())
 	fileName := path.Base(textFile.Name())
 
@@ -138,11 +138,17 @@ func sendTextFile(textFile *os.File, network string, address string) (err error)
 
 	for scanner.Scan() {
 		line := scanner.Text()
+		linesRead++
 		bytesRead += uint64(len(line)) + 1
-		fmt.Fprintf(destPort, line)
-		cli.Infof("\rtransfer: %s %s", fileName, format.Progress(bytesRead, totalSize))
-		time.Sleep(time.Millisecond * 2)
+		_, err = fmt.Fprint(destPort, line)
+		if err != nil {
+			cli.Errorf("\r")
+			return err
+		}
+		if linesRead%1000 == 0 {
+			cli.Infof("\rtransfer: %s %6dpkts %s", fileName, linesRead, format.Progress(bytesRead, totalSize))
+		}
 	}
-	cli.Info(cli.Green("\rtransfer: Successfully sent '%s'", fileName))
+	cli.Info(cli.Green("\rtransfer: Successfully sent '%s' (%d packets)", fileName, linesRead))
 	return err
 }
