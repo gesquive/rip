@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"path"
+	"time"
 
 	"github.com/gesquive/cli"
 	"github.com/gesquive/rip/format"
@@ -136,6 +137,22 @@ func sendTextFile(textFile *os.File, network string, address string) (err error)
 		return err
 	}
 
+	ticker := time.NewTicker(100 * time.Millisecond)
+	stats := make(chan struct{})
+
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				cli.Infof("\rtransfer: %s %6dpkts %s", fileName, linesRead, format.Progress(bytesRead, totalSize))
+			case <-stats:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
+
+	start := time.Now()
 	for scanner.Scan() {
 		line := scanner.Text()
 		linesRead++
@@ -145,10 +162,11 @@ func sendTextFile(textFile *os.File, network string, address string) (err error)
 			cli.Errorf("\r")
 			return err
 		}
-		if linesRead%1000 == 0 {
-			cli.Infof("\rtransfer: %s %6dpkts %s", fileName, linesRead, format.Progress(bytesRead, totalSize))
-		}
 	}
-	cli.Info(cli.Green("\rtransfer: Successfully sent '%s' (%d packets)", fileName, linesRead))
+	end := time.Now()
+
+	close(stats)
+	cli.Info(cli.Green("\rtransfer: Successfully sent '%s' (%d packets in %s secs) %.2f pkt/sec",
+		fileName, linesRead, end.Sub(start).String(), float64(linesRead)/end.Sub(start).Seconds()))
 	return err
 }
