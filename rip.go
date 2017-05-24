@@ -8,6 +8,8 @@ import (
 	"path"
 	"time"
 
+	"go.uber.org/ratelimit"
+
 	"github.com/gesquive/cli"
 	"github.com/gesquive/rip/format"
 	"github.com/spf13/cobra"
@@ -18,6 +20,7 @@ var displayVersion string
 
 var logDebug bool
 var showVersion bool
+var msgRate int
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -47,6 +50,9 @@ func init() {
 		"Write debug messages to console")
 	RootCmd.PersistentFlags().BoolVarP(&showVersion, "version", "V", false,
 		"Show the version and exit")
+
+	RootCmd.PersistentFlags().IntVarP(&msgRate, "rate-limit", "r", -1,
+		"Message rate allowed per second, use -1 for no limit")
 
 	RootCmd.PersistentFlags().MarkHidden("debug")
 }
@@ -83,7 +89,7 @@ func run(cmd *cobra.Command, args []string) {
 	pipeFound := fileInput.Mode()&os.ModeNamedPipe != 0
 	if pipeFound {
 		cli.Debug("Pipe input detected, sending")
-		err := sendTextFile(os.Stdin, protocol, address)
+		err := sendTextFile(os.Stdin, protocol, address, msgRate)
 		if err != nil {
 			cli.Error("Failed to send piped data")
 			cli.Error(err.Error())
@@ -95,12 +101,12 @@ func run(cmd *cobra.Command, args []string) {
 		textFile, err := os.Open(f)
 		defer textFile.Close()
 		if err != nil {
-			cli.Errorf("Failed to send '%s'\n", f)
+			cli.Errorf("Failed to send '%s'\n\r", f)
 			cli.Error(err.Error())
 			errCount++
 			continue
 		}
-		err = sendTextFile(textFile, protocol, address)
+		err = sendTextFile(textFile, protocol, address, msgRate)
 		if err != nil {
 			cli.Errorf("Failed to send '%s' to %s://%s\n", f, protocol, address)
 			cli.Error(err.Error())
@@ -119,7 +125,7 @@ func run(cmd *cobra.Command, args []string) {
 	}
 }
 
-func sendTextFile(textFile *os.File, network string, address string) (err error) {
+func sendTextFile(textFile *os.File, network string, address string, rate int) (err error) {
 	fileInfo, err := textFile.Stat()
 	if err != nil {
 		return err
@@ -139,6 +145,12 @@ func sendTextFile(textFile *os.File, network string, address string) (err error)
 
 	ticker := time.NewTicker(100 * time.Millisecond)
 	stats := make(chan struct{})
+	var limiter ratelimit.Limiter
+	if rate < 0 {
+		limiter = ratelimit.NewUnlimited()
+	} else {
+		limiter = ratelimit.New(rate)
+	}
 
 	go func() {
 		for {
@@ -157,6 +169,7 @@ func sendTextFile(textFile *os.File, network string, address string) (err error)
 		line := scanner.Text()
 		linesRead++
 		bytesRead += uint64(len(line)) + 1
+		limiter.Take()
 		_, err = fmt.Fprint(destPort, line)
 		if err != nil {
 			cli.Errorf("\r")
