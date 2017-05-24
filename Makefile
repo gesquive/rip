@@ -89,8 +89,8 @@ dist: build-all ## Cross compile the full distribution
 	cd dist && \
 	$(FIND_DIST) cp ../LICENSE {} \; && \
 	$(FIND_DIST) cp ../README.md {} \; && \
-	$(FIND_DIST) tar -zcf ${PROJECT_NAME}-${VERSION}-{}.tar.gz {} \; && \
-	$(FIND_DIST) zip -r ${PROJECT_NAME}-${VERSION}-{}.zip {} \; && \
+	$(FIND_DIST) tar --exclude=".*" --owner=0 --group=0  -zcf ${PROJECT_NAME}-${VERSION}-{}.tar.gz {} \; && \
+	$(FIND_DIST) zip --exclude .\* -qr ${PROJECT_NAME}-${VERSION}-{}.zip {} \; && \
 	cd ..
 
 .PHONY: fmt
