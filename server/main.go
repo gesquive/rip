@@ -51,31 +51,6 @@ func handleRequest(conn net.Conn) {
 		}
 		fmt.Printf("%3d>> %s\n", reqLen, buf[0:reqLen])
 	}
-
-	// Read the incoming connection into the buffer.
-	// reqLen, err := conn.Read(buf)
-	// if err != nil {
-	// 	fmt.Println("Error reading:", err.Error())
-	// }
-	// // Send a response back to person contacting us.
-	// fmt.Printf(">> %s\n", buf[0:reqLen])
-	// Close the connection when you're done with it.
-	// conn.Close()
-	//
-	// // will listen for message to process ending in newline (\n)
-	// message, err := bufio.NewReader(conn).ReadString('\n')
-	// if err != nil {
-	// 	fmt.Printf("%v", err)
-	// 	return
-	// }
-	// if len(message) > 0 {
-	// 	// output message received
-	// 	fmt.Print("Message Received:", string(message))
-	// 	// sample process for string received
-	// 	newmessage := strings.ToUpper(message)
-	// 	// send new string back to client
-	// 	conn.Write([]byte(newmessage + "\n"))
-	// }
 }
 
 //
