@@ -1,5 +1,5 @@
-hash: 9c6e007cd508db871a33d6c36a4389b08097d55ff8891a31f9614f2a7ea517a8
-updated: 2017-05-23T17:47:00.999105741-05:00
+hash: d63799a44a5c6ccf82175df1f9158fd9bac6b77f0ab242cd2bddbe3335f145be
+updated: 2017-05-26T10:37:55.066390833-05:00
 imports:
 - name: github.com/dustin/go-humanize
   version: 259d2a102b871d17f30e3cd9881a642961a1e486
@@ -7,10 +7,6 @@ imports:
   version: 9131ab34cf20d2f6d83fdc67168a5430d1c7dc23
 - name: github.com/gesquive/cli
   version: 944950c5782fb9490e1e8c2b46d21194aae2c21b
-- name: github.com/gesquive/rip
-  version: 4aa0e0fe0c757392274006feed883502d20d907d
-  subpackages:
-  - format
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/mattn/go-colorable
@@ -23,8 +19,14 @@ imports:
   version: ca57f0f5dba473a8a58765d16d7e811fb8027add
 - name: github.com/spf13/pflag
   version: e57e3eeb33f795204c1ca35f56c44f83227c6e66
+- name: github.com/uber-go/atomic
+  version: 4e336646b2ef9fc6e47be8e21594178f98e5ebcf
+- name: go.uber.org/atomic
+  version: 4e336646b2ef9fc6e47be8e21594178f98e5ebcf
 - name: go.uber.org/ratelimit
   version: d15fa2e2a63dd52104bc96d8ea7dc47ce8027de8
+  subpackages:
+  - internal/clock
 - name: golang.org/x/sys
   version: e24f485414aeafb646f6fca458b0bf869c0880a1
   repo: https://go.googlesource.com/sys
