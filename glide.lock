@@ -1,5 +1,5 @@
 hash: f0aac3a70c665a0fc129642d3fa07aaf4854e8512847b1cf901b28292788e0b1
-updated: 2017-05-26T17:15:13.217483519-05:00
+updated: 2017-05-31T14:37:36.991727821-05:00
 imports:
 - name: github.com/dustin/go-humanize
   version: 259d2a102b871d17f30e3cd9881a642961a1e486
@@ -16,7 +16,7 @@ imports:
   version: 57fdcb988a5c543893cc61bce354a6e24ab70022
   repo: https://github.com/mattn/go-isatty
 - name: github.com/spf13/cobra
-  version: ca57f0f5dba473a8a58765d16d7e811fb8027add
+  version: 8d4ce3549a0bf0e3569df3aae7423b7743cd05a9
 - name: github.com/spf13/pflag
   version: e57e3eeb33f795204c1ca35f56c44f83227c6e66
 - name: github.com/uber-go/atomic

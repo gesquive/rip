@@ -63,7 +63,11 @@ depends: ## Download project dependencies
 
 .PHONY: test
 test: ## Run golang tests
-	${GOCC} test ./...
+	${GOCC} test -excludepkg ./vendor... ./...
+
+.PHONY: bench
+bench: ## Run golang benchmarks
+	${GOCC} test -benchmem -bench=. ./...
 
 .PHONY: clean
 clean: ## Clean the directory tree of artifacts
