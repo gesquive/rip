@@ -3,7 +3,5 @@ go:
  - 1.6.x
  - 1.7.x
  - 1.8.x
-install: go get github.com/gesquive/rip
-script:
-    - make test
-    - make
+install: make deps
+script: make

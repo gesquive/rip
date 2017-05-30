@@ -36,12 +36,12 @@ INSTALL_PATH=$(GOPATH)/${REPO_HOST_URL}/${OWNER}/${PROJECT_NAME}
 
 FIND_DIST:=find * -type d -exec
 
-default: build
+default: test build
 
 .PHONY: help
 help:
 	@echo 'Management commands for ${PROJECT_NAME}:'
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
+	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
 	 awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-30s\033[0m %s\n", $$1, $$2}'
 	@echo
 
@@ -56,8 +56,8 @@ install: build ## Install the binaries on this computer
 	install -d ${DESTDIR}/usr/local/bin/
 	install -m 755 ./${BIN_NAME} ${DESTDIR}/usr/local/bin/${BIN_NAME}
 
-.PHONY: depends
-depends: ## Download project dependencies
+.PHONY: deps
+deps: ## Download project dependencies
 	${GOCC} get -u github.com/Masterminds/glide
 	glide install
 
