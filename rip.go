@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"path"
+	"runtime"
 	"time"
 
 	"go.uber.org/ratelimit"
@@ -15,28 +16,35 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var cfgFile string
-var displayVersion string
+var (
+	buildVersion = "v0.2.1-dev"
+	buildCommit  = ""
+	buildDate    = ""
+)
 
-var logDebug bool
+var debug bool
 var showVersion bool
 var msgRate int
 
+func main() {
+	Execute()
+}
+
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Use:       "rip [flags] <host>[:<port>] <tcp|udp> <file_path> [<file_path>...]",
-	Short:     "Sends a text file line by line to a remote host/port",
-	Long:      `Sends a text file line by line to a remote host/port.`,
-	ValidArgs: []string{"host:port", "tcp|udp", "file_path"},
-	Run:       run,
+	Use:              "rip [flags] <host>[:<port>] <tcp|udp> <file_path> [<file_path>...]",
+	Short:            "Sends a text file line by line to a remote host/port",
+	Long:             `Sends a text file line by line to a remote host/port.`,
+	ValidArgs:        []string{"host:port", "tcp|udp", "file_path"},
+	PersistentPreRun: preRun,
+	Run:              run,
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute(version string) {
-	displayVersion = version
-	RootCmd.SetHelpTemplate(fmt.Sprintf("%s\nVersion:\n  github.com/gesquive/%s\n",
-		RootCmd.HelpTemplate(), displayVersion))
+func Execute() {
+	RootCmd.SetHelpTemplate(fmt.Sprintf("%s\nVersion:\n  github.com/gesquive/rip %s\n",
+		RootCmd.HelpTemplate(), buildVersion))
 	if err := RootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
@@ -44,9 +52,7 @@ func Execute(version string) {
 }
 
 func init() {
-	cobra.OnInitialize(initConfig)
-
-	RootCmd.PersistentFlags().BoolVarP(&logDebug, "debug", "D", false,
+	RootCmd.PersistentFlags().BoolVarP(&debug, "debug", "D", false,
 		"Write debug messages to console")
 	RootCmd.PersistentFlags().BoolVarP(&showVersion, "version", "V", false,
 		"Show the version and exit")
@@ -57,13 +63,22 @@ func init() {
 	RootCmd.PersistentFlags().MarkHidden("debug")
 }
 
-func initConfig() {
-	if logDebug {
-		cli.SetPrintLevel(cli.LevelDebug)
-	}
+func preRun(cmd *cobra.Command, args []string) {
 	if showVersion {
-		cli.Info(displayVersion)
+		fmt.Printf("github.com/gesquive/rip\n")
+		fmt.Printf(" Version:    %s\n", buildVersion)
+		if len(buildCommit) > 6 {
+			fmt.Printf(" Git Commit: %s\n", buildCommit[:7])
+		}
+		if buildDate != "" {
+			fmt.Printf(" Build Date: %s\n", buildDate)
+		}
+		fmt.Printf(" Go Version: %s\n", runtime.Version())
+		fmt.Printf(" OS/Arch:    %s/%s\n", runtime.GOOS, runtime.GOARCH)
 		os.Exit(0)
+	}
+	if debug {
+		cli.SetPrintLevel(cli.LevelDebug)
 	}
 	cli.Debug("Running with debug turned on")
 }
